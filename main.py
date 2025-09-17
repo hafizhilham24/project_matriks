@@ -3,7 +3,7 @@ from matriks.matrix import Matrix
 from matriks.operations.adder import add_matrices 
 from matriks.operations.multiplier import multiply_matrices 
 from matriks.utilities import print_matrix 
- 
+from csv_exporter import export_to_csv 
 if __name__ == "__main__": 
     matriks_a = Matrix([[1, 2], [3, 4]]) 
     matriks_b = Matrix([[5, 6], [7, 8]]) 
