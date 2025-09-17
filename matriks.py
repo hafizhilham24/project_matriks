@@ -1,3 +1,4 @@
+#menambahkan komentar sebagai contoh
 # matrix.py 
 class Matrix: 
 """ 
