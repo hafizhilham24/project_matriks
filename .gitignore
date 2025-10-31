@@ -11,7 +11,6 @@ log/
 Thumbs.db
 
 # Dataset dan file besar
-*.csv
 *.xlsx
 *.json
 data/

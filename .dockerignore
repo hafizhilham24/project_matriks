@@ -1,0 +1,7 @@
+# Abaikan folder virtual environment
+env/
+venv/
+
+# Abaikan file cache Python
+__pycache__/
+*.pyc
