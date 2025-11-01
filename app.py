@@ -80,6 +80,60 @@ def generate_plot(feature_data, target_data, theta, feature_index, feature_name,
     except Exception as e:
         return {"error": f"Error generating plot for {feature_name}: {e}"}
 
+# --- FUNGSI BARU DITAMBAHKAN DI SINI ---
+def generate_actual_vs_predicted_plot(theta, feature_data, target_data, target_name):
+    """
+    Generates an 'Actual vs. Predicted' plot for the full model
+    and returns a Base64 encoded string.
+    """
+    try:
+        y_actual = np.array(target_data)
+        predictions = []
+        
+        # Dapatkan intercept (theta[0])
+        intercept = theta.get_value(0, 0)
+        
+        # Hitung prediksi penuh untuk setiap baris data
+        for row in feature_data:
+            prediction = intercept
+            for i in range(len(row)):
+                # Dapatkan slope untuk feature_index 'i' (theta[i+1])
+                slope = theta.get_value(i + 1, 0)
+                prediction += slope * row[i]
+            predictions.append(prediction)
+        
+        x_predicted = np.array(predictions)
+
+        # Mulai plotting
+        fig, ax = plt.subplots(figsize=(8, 6))
+        # Gunakan warna lain agar terlihat beda
+        ax.scatter(x_predicted, y_actual, color='green', alpha=0.6, label='Data Points (Prediksi vs Aktual)')
+        
+        # Buat garis y=x (perfect fit line)
+        min_val = min(np.min(x_predicted), np.min(y_actual))
+        max_val = max(np.max(x_predicted), np.max(y_actual))
+        ax.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--', label='Perfect Fit Line (Prediksi = Aktual)')
+        
+        ax.set_title(f'Plot Regresi: Aktual vs. Prediksi Model Penuh')
+        ax.set_xlabel(f'Prediksi {target_name.replace("_", " ")}')
+        ax.set_ylabel(f'Aktual {target_name.replace("_", " ")}')
+        ax.legend()
+        plt.tight_layout()
+
+        # Konversi ke Base64 (sama seperti fungsi lainnya)
+        buf = BytesIO()
+        fig.savefig(buf, format='png')
+        plt.close(fig)
+        buf.seek(0)
+        
+        plot_url = base64.b64encode(buf.getvalue()).decode('utf-8')
+        # Kita sesuaikan 'feature_name' dan 'target_name' agar judul <h3> di HTML pas
+        return {"url": plot_url, "feature_name": "Aktual vs. Prediksi", "target_name": "Model Penuh"}
+
+    except Exception as e:
+        return {"error": f"Error generating Actual vs Predicted plot: {e}"}
+# --- AKHIR FUNGSI BARU ---
+
 
 @app.route('/')
 def run_script_and_show_plot():
@@ -100,7 +154,23 @@ def run_script_and_show_plot():
     feature_names = results["feature_names"]
     
     plots = []
+
+    # --- TAMBAHAN KODE: Buat plot Aktual vs. Prediksi (Plot Alternatif) ---
+    # Plot ini dibuat pertama kali dan ditambahkan ke list 'plots'
+    try:
+        avp_plot_info = generate_actual_vs_predicted_plot(
+            theta, 
+            feature_data, 
+            target_data, 
+            target_name
+        )
+        plots.append(avp_plot_info) # Menambahkan plot ini di urutan pertama
+    except Exception as e:
+        plots.append({"error": f"Error generating A-v-P plot: {e}", "feature_name": "Error Plot", "target_name": ""})
+    # --- AKHIR TAMBAHAN KODE ---
+    
     # Loop through all feature variables to create a plot for each one
+    # (Kode ini tetap sama, plot-plot ini akan ditambahkan SETELAH plot di atas)
     for i, feature_name in enumerate(feature_names):
         plot_info = generate_plot(feature_data, target_data, theta, i, feature_name, target_name)
         if "url" in plot_info:
@@ -110,12 +180,11 @@ def run_script_and_show_plot():
             plots.append(plot_info)
 
     return render_template_string(
-        HTML_TEMPLATE, 
-        output=model_output, 
+        HTML_TEMPLATE,  
+        output=model_output,  
         plots=plots
     )
 
 
 if __name__ == '__main__':
     app.run(port=8000) #(debug=True)
-
